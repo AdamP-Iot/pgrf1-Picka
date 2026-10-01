@@ -40,7 +40,7 @@ public class Controller {
 
     public void init() {
         canvas.clear();
-        rasterizer.rasterize(new Line(Color.WHITE.getRGB(), new Point(200,100),new Point(150, 100)));
+        rasterizer.rasterize(new Line(Color.WHITE.getRGB(), new Point(100,100),new Point(50, 400)));
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e){

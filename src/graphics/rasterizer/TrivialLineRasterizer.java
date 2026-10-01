@@ -23,6 +23,11 @@ public class TrivialLineRasterizer implements LineRasterizer {
        int dominantX = Math.abs(x2-x1);
        int dominantY = Math.abs(y2-y1);
        if(x1 == x2){
+           if(y2<y1){
+               int pomY = y1;
+               y1 = y2;
+               y2 = pomY;
+           }
            for(int y = y1; y <= y2; y++){
                raster.setPixel(x1,y,color);
            }
@@ -48,9 +53,8 @@ public class TrivialLineRasterizer implements LineRasterizer {
            }
            for (int y = y1; y <= y2; y++) {
                float x = (y - q) / k;
-               raster.setPixel(y, Math.round(x), color);
+               raster.setPixel(Math.round(x), y, color);
            }
-
            //u zk kouknout a y= kx+q atd atd
        }
     }
