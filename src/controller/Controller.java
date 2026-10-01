@@ -40,7 +40,7 @@ public class Controller {
 
     public void init() {
         canvas.clear();
-        rasterizer.rasterize(new Line(Color.WHITE.getRGB(), new Point(200,150),new Point(300, 150)));
+        rasterizer.rasterize(new Line(Color.WHITE.getRGB(), new Point(200,100),new Point(400, 100)));
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e){
@@ -52,6 +52,7 @@ public class Controller {
             public void keyPressed(KeyEvent e) {
                 if(e.getKeyCode() == KeyEvent.VK_C){
                     canvas.clear();
+                    canvas.repaint();
                 }
             }
         });

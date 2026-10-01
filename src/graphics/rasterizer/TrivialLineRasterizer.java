@@ -22,21 +22,14 @@ public class TrivialLineRasterizer implements LineRasterizer {
        int dominantX = Math.abs(x2-x1);
        int dominantY = Math.abs(y2-y1);
        float k;
-       float q;
-       if(x1 != x2){
-           k = (y2-y1)/(float)(x2-x1); //sklon
-           q = y1 - k * x1;
-        } else{
+       if(x1 == x2){
            k = (y2-y1);
-           q = y1 - k * x1;
-        }
-       if(y1 != y2){
-           k = (y2-y1)/(float)(x2-x1);
-           q = y1 - k * x1;
-       } else{
+       } else if(y1 == y2){
            k = y1/(float)(x2-x1);
-           q = y1 - k * x1;
+       } else{
+           k = (y2-y1)/(float)(x2-x1);
        }
+        float q = y1 - k * x1;
        if(dominantX >= dominantY){
            if(x2 < x1){
                int pomX = x1;
