@@ -23,7 +23,8 @@ public class Window extends JFrame {
         setResizable(false); //extBody kdyz true
 
         canvas = new Canvas(width, height);
-        add(canvas);
+        add(canvas, BorderLayout.CENTER);
+        add(toolBar(), BorderLayout.NORTH);
         pack();
 
         setLocationRelativeTo(null);
@@ -38,4 +39,13 @@ public class Window extends JFrame {
         return canvas;
     }
 
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= JToolBar -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
+    private JToolBar toolBar(){
+        JToolBar tb = new JToolBar();
+        JLabel label = new JLabel("ToolBar");
+        tb.add(label);
+        tb.setVisible(true);
+        return tb;
+    };
 }
