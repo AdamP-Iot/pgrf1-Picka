@@ -8,10 +8,8 @@ import model.Point;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import view.Window;
 
 
 /**
@@ -28,16 +26,18 @@ import java.awt.event.MouseEvent;
  * @version 2026
  */
 public class Controller  {
-
     private final Canvas canvas;
     private final LineRasterizer rasterizer;
 
+    private final Window window;
+
+
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
-    public Controller(Canvas canvas) {
-        this.canvas = canvas;
+    public Controller(Window window) {
+        this.canvas = window.getCanvas();
         this.rasterizer = new TrivialLineRasterizer(canvas.getRaster());
-
+        this.window = window;
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -51,6 +51,14 @@ public class Controller  {
 
             }
         });
+        //ready na tlačítka
+        Action lineAction = new AbstractAction("Line"){
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Kliknuto");
+            }
+        };
+        window.addAction(lineAction);
+
         canvas.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {

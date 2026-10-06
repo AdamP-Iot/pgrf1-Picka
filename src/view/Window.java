@@ -2,6 +2,7 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import controller.Controller;
 
 /**
  * Represents the main application window that displays the {@link Canvas}.
@@ -13,6 +14,8 @@ import java.awt.*;
 public class Window extends JFrame {
 
     private final Canvas canvas;
+    private JToolBar tb;
+
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -24,7 +27,8 @@ public class Window extends JFrame {
 
         canvas = new Canvas(width, height);
         add(canvas, BorderLayout.CENTER);
-        add(toolBar(), BorderLayout.NORTH);
+        add(ToolBar(), BorderLayout.NORTH);
+
         pack();
 
         setLocationRelativeTo(null);
@@ -41,11 +45,14 @@ public class Window extends JFrame {
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= JToolBar -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
-    private JToolBar toolBar(){
-        JToolBar tb = new JToolBar();
+    private JToolBar ToolBar(){
+        tb = new JToolBar();
         JLabel label = new JLabel("ToolBar");
         tb.add(label);
         tb.setVisible(true);
         return tb;
     };
+    public void addAction(Action action){
+        tb.add(action);
+    }
 }
