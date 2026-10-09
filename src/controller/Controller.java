@@ -47,6 +47,9 @@ public class Controller  {
     private Point firstPoint;
     private Point lastPoint;
 
+    private static final int MODE_POLYGON = 0;
+    private static final int MODE_CURSOR = 1;
+    private int mode = MODE_POLYGON;
 
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
@@ -78,26 +81,58 @@ public class Controller  {
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e){
-                if(e.getButton() == MouseEvent.BUTTON3){
-                    finishPolygon();
-                } else if (e.getButton()== MouseEvent.BUTTON1) {
-                    startLine(e);
-                } else if(e.getButton() == MouseEvent.BUTTON2){
+                if(mode == MODE_POLYGON){
+                    if(e.getButton() == MouseEvent.BUTTON1){
+                        startLine(e);
+                    } else if (e.getButton()== MouseEvent.BUTTON3) {
+                        finishPolygon();
+                    } else if(e.getButton() == MouseEvent.BUTTON2){
 
+                    }
+                } else if (mode == MODE_CURSOR){
+                    if(e.getButton() == MouseEvent.BUTTON1){
+
+                    } else if (e.getButton()== MouseEvent.BUTTON3) {
+
+                    } else if(e.getButton() == MouseEvent.BUTTON2){
+
+                    }
                 }
             }
         });
         //Tlačítka
-        Action lineAction = new AbstractAction("Line"){
+        Action polygonAction = new AbstractAction("Polygon"){
+            @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Kliknuto");
+                mode = MODE_POLYGON;
+            }
+        };
+        Action cursorAction = new AbstractAction("Cursor"){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mode = MODE_CURSOR;
+                previewLine = null;
+                previewLine2 = null;
+                render();
+            }
+        };
+        Action deleteAction = new AbstractAction("Delete Polygon"){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
             }
         };
         //Odeslání tlačítka do JToolBaru
-        window.addAction(lineAction);
+        window.addAction(cursorAction);
+        window.addAction(polygonAction);
+        window.addAction(deleteAction);
 
         canvas.addMouseMotionListener(new MouseMotionAdapter(){
             public void mouseMoved(MouseEvent e){
+                if(mode != MODE_POLYGON){
+                    return;
+                }
+
                 Point mousePoint = getPoint(e);
                 if(lastPoint != null){
                     previewLine = new Line(PREVIEW_COLOR,lastPoint,getPoint(e));
