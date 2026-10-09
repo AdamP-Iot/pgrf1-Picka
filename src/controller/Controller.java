@@ -49,6 +49,8 @@ public class Controller  {
 
     private static final int MODE_POLYGON = 0;
     private static final int MODE_CURSOR = 1;
+    private static final int MODE_DELETE = 2;
+
     private int mode = MODE_POLYGON;
 
 
@@ -97,6 +99,10 @@ public class Controller  {
                     } else if(e.getButton() == MouseEvent.BUTTON2){
 
                     }
+                } else if (mode == MODE_DELETE){
+                    if(e.getButton() == MouseEvent.BUTTON1){
+                        deleteNearestPoint(getPoint(e));
+                    }
                 }
             }
         });
@@ -119,7 +125,10 @@ public class Controller  {
         Action deleteAction = new AbstractAction("Delete Polygon"){
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                mode = MODE_DELETE;
+                previewLine = null;
+                previewLine2 = null;
+                render();
             }
         };
         //Odeslání tlačítka do JToolBaru
@@ -143,6 +152,18 @@ public class Controller  {
                 render();
             }
         });
+
+        window.getRootPane()    //ošetření ztraceného focus, když klikáme do JToolBaru
+                .getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0), "delete");
+        window.getRootPane().getActionMap().put("delete", new AbstractAction(){
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                deleteAll();
+            }
+        });
+
+
         canvas.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -208,5 +229,45 @@ public class Controller  {
         firstPoint = null;
         canvas.clear();
         canvas.repaint();
+    }
+    private void deleteNearestPoint(Point mousePoint){
+        double nearestDistance = Double.MAX_VALUE;
+        Polygon nearestPolygon = null;
+        int nearestIndex = -1;
+
+        for(Polygon polygon : polygons){
+            List<Line> polygonLines = polygon.getLines();   //hrany aktuálního polygonu
+            for(int i = 0; i < polygonLines.size(); i++){
+
+                Point point = polygonLines.get(i).getPoint1();  //projdeme je a vypočítáme vzdálenost mezi body
+                double dx = mousePoint.getX() - point.getX();
+                double dy = mousePoint.getY() - point.getY();
+                double distance = Math.sqrt(dx * dx + dy * dy);
+
+                if(distance < nearestDistance){
+                    nearestDistance = distance;
+                    nearestPolygon = polygon;
+                    nearestIndex = i;
+
+                }
+            }
+        }
+        if(nearestPolygon == null ){
+            return;
+        }
+
+        List<Line> polygonLines = nearestPolygon.getLines();    //edit polygonů
+        int previousIndex = (nearestIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
+
+        Line previousLine = polygonLines.get(previousIndex);
+        Line currentLine = polygonLines.get(nearestIndex);
+
+        Point previousPoint = previousLine.getPoint1();
+        Point nextPoint = currentLine.getPoint2();
+
+        polygonLines.set(previousIndex, new Line(LINE_COLOR, previousPoint, nextPoint));
+        polygonLines.remove(nearestIndex);
+        render();
+
     }
 }
