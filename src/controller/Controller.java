@@ -37,10 +37,11 @@ public class Controller  {
     private final LineRasterizer rasterizer;
     private final PolygonRasterizer polygonRasterizer;
     private final List<Line> lines;
+    private final List<Polygon> polygons;
 
     private Line previewLine;
     private Line previewLine2;
-    private final Polygon polygon;
+
     private static final int LINE_COLOR = Color.WHITE.getRGB();
     private static final int PREVIEW_COLOR = Color.RED.getRGB();
     private Point firstPoint;
@@ -55,7 +56,7 @@ public class Controller  {
         this.window = window;
         this.rasterizer = new TrivialLineRasterizer(canvas.getRaster());
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
-        this.polygon = new Polygon(new ArrayList<>());
+        this.polygons = new ArrayList<>();
         this.lines = new ArrayList<>();
 
 //        lines.add(new Line(Color.WHITE.getRGB(), new Point(100,100),new Point(300, 100)));
@@ -81,6 +82,8 @@ public class Controller  {
                     finishPolygon();
                 } else if (e.getButton()== MouseEvent.BUTTON1) {
                     startLine(e);
+                } else if(e.getButton() == MouseEvent.BUTTON2){
+
                 }
             }
         });
@@ -109,10 +112,7 @@ public class Controller  {
             @Override
             public void keyPressed(KeyEvent e) {
                 if(e.getKeyCode() == KeyEvent.VK_C){
-                    lines.clear();
-                    previewLine = null;
-                    lastPoint = null;
-                    firstPoint = null;
+                    deleteAll();
                     render();
                 }
             }
@@ -121,7 +121,12 @@ public class Controller  {
     }
     public void render(){
         canvas.clear();
-        polygonRasterizer.rasterize(new Polygon(lines));
+        for(Polygon polygon : polygons){    //už nakreslené polygony
+            polygonRasterizer.rasterize(polygon);
+        }
+
+        polygonRasterizer.rasterize(new Polygon(lines));    //právě kreslený polygon
+
         if(previewLine != null){
             rasterizer.rasterize(previewLine);
         }
@@ -149,11 +154,24 @@ public class Controller  {
         if(firstPoint != null && lastPoint != null && firstPoint != lastPoint){
             lines.add(new Line(LINE_COLOR, lastPoint, firstPoint));
         }
+        polygons.add(new Polygon(new ArrayList<>(lines)));
+
+        lines.clear();
         previewLine = null;
         previewLine2 = null;
         lastPoint = null;
         firstPoint = null;
 
         render();
+    }
+    private void deleteAll(){
+        polygons.clear();
+        lines.clear();
+        previewLine = null;
+        previewLine2 = null;
+        lastPoint = null;
+        firstPoint = null;
+        canvas.clear();
+        canvas.repaint();
     }
 }
