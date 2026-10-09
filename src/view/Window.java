@@ -47,8 +47,6 @@ public class Window extends JFrame {
 
     private JToolBar ToolBar(){
         tb = new JToolBar();
-        JLabel label = new JLabel("ToolBar");
-        tb.add(label);
         tb.setVisible(true);
         return tb;
     };
