@@ -39,9 +39,12 @@ public class Controller  {
     private final List<Line> lines;
 
     private Line previewLine;
+    private Line previewLine2;
     private final Polygon polygon;
     private static final int LINE_COLOR = Color.WHITE.getRGB();
     private static final int PREVIEW_COLOR = Color.RED.getRGB();
+    private Point firstPoint;
+    private Point lastPoint;
 
 
 
@@ -55,10 +58,10 @@ public class Controller  {
         this.polygon = new Polygon(new ArrayList<>());
         this.lines = new ArrayList<>();
 
-        lines.add(new Line(Color.WHITE.getRGB(), new Point(100,100),new Point(300, 100)));
-        lines.add(new Line(Color.WHITE.getRGB(), new Point(300,100),new Point(350, 250)));
-        lines.add(new Line(Color.WHITE.getRGB(), new Point(350,250),new Point(200, 350)));
-        lines.add(new Line(Color.WHITE.getRGB(), new Point(200,350),new Point(100, 100)));
+//        lines.add(new Line(Color.WHITE.getRGB(), new Point(100,100),new Point(300, 100)));
+//        lines.add(new Line(Color.WHITE.getRGB(), new Point(300,100),new Point(350, 250)));
+//        lines.add(new Line(Color.WHITE.getRGB(), new Point(350,250),new Point(200, 350)));
+//        lines.add(new Line(Color.WHITE.getRGB(), new Point(200,350),new Point(100, 100)));
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -80,10 +83,6 @@ public class Controller  {
                     startLine(e);
                 }
             }
-            @Override
-            public void mouseReleased(MouseEvent e){
-            //test -> 1) polygon, rasterizer...teorie, 2 - definice pojem spojovani 3) vypocet algoritmu kalkulacka - smernici,stred... 4)vyplnovani kodu ze cvik
-            }
         });
         //Tlačítka
         Action lineAction = new AbstractAction("Line"){
@@ -95,16 +94,26 @@ public class Controller  {
         window.addAction(lineAction);
 
         canvas.addMouseMotionListener(new MouseMotionAdapter(){
-            public void mouseDragged(MouseEvent e){
-                //TODO: Zobrazit preview čáry
+            public void mouseMoved(MouseEvent e){
+                Point mousePoint = getPoint(e);
+                if(lastPoint != null){
+                    previewLine = new Line(PREVIEW_COLOR,lastPoint,getPoint(e));
+                }
+                if(firstPoint != null && lastPoint != null){
+                    previewLine2 = new Line(PREVIEW_COLOR,mousePoint,firstPoint);
+                }
+                render();
             }
         });
         canvas.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if(e.getKeyCode() == KeyEvent.VK_C){
-                    canvas.clear();
-                    canvas.repaint();
+                    lines.clear();
+                    previewLine = null;
+                    lastPoint = null;
+                    firstPoint = null;
+                    render();
                 }
             }
         });
@@ -112,13 +121,24 @@ public class Controller  {
     }
     public void render(){
         canvas.clear();
-        polygonRasterizer.rasterize(polygon);
+        polygonRasterizer.rasterize(new Polygon(lines));
+        if(previewLine != null){
+            rasterizer.rasterize(previewLine);
+        }
+        if(previewLine2 != null){
+            rasterizer.rasterize(previewLine2);
+        }
         canvas.repaint();
     }
     private void startLine(MouseEvent e){
-        //Vzít posledni bod polygonu
-        //Vzít getPoint(e) - aktualni bod
-        //previewLine = new Line(startPoint, lastPoint, PREVIEW_COLOR);
+        Point point = getPoint(e);
+        if(firstPoint == null){
+            firstPoint = point;
+            lastPoint = point;
+        } else{
+            lines.add(new Line(LINE_COLOR, lastPoint, point));
+            lastPoint = point;
+        }
         render();
     }
     //Pomocna metoda
@@ -126,7 +146,14 @@ public class Controller  {
         return new Point(e.getX(), e.getY());
     }
     private void finishPolygon(){
+        if(firstPoint != null && lastPoint != null && firstPoint != lastPoint){
+            lines.add(new Line(LINE_COLOR, lastPoint, firstPoint));
+        }
         previewLine = null;
+        previewLine2 = null;
+        lastPoint = null;
+        firstPoint = null;
+
         render();
     }
 }
