@@ -15,7 +15,7 @@ public class Window extends JFrame {
 
     private final Canvas canvas;
     private JToolBar tb;
-
+    JComboBox<String> rasterizerBox;
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -48,9 +48,18 @@ public class Window extends JFrame {
     private JToolBar ToolBar(){
         tb = new JToolBar();
         tb.setVisible(true);
+
+        String[] rasterizers = {"Trivial","DDA","Bresenham","Midpoint"};
+        rasterizerBox = new JComboBox<>(rasterizers);
+        rasterizerBox.setMaximumSize(new Dimension(120,25));
+        tb.add(rasterizerBox);
+
         return tb;
     };
     public void addAction(Action action){
         tb.add(action);
+    }
+    public JComboBox<String> getRasterizerBox(){
+        return rasterizerBox;
     }
 }

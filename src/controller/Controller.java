@@ -1,9 +1,6 @@
 package controller;
 
-import graphics.rasterizer.LineRasterizer;
-import graphics.rasterizer.PolygonOutLineRasterizer;
-import graphics.rasterizer.PolygonRasterizer;
-import graphics.rasterizer.TrivialLineRasterizer;
+import graphics.rasterizer.*;
 import view.Canvas;
 import model.Line;
 import model.Point;
@@ -34,8 +31,8 @@ public class Controller  {
     private final Canvas canvas;
     private final Window window;
 
-    private final LineRasterizer rasterizer;
-    private final PolygonRasterizer polygonRasterizer;
+    private LineRasterizer rasterizer;
+    private PolygonRasterizer polygonRasterizer;
     private final List<Line> lines;
     private final List<Polygon> polygons;
 
@@ -64,11 +61,6 @@ public class Controller  {
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
         this.polygons = new ArrayList<>();
         this.lines = new ArrayList<>();
-
-//        lines.add(new Line(Color.WHITE.getRGB(), new Point(100,100),new Point(300, 100)));
-//        lines.add(new Line(Color.WHITE.getRGB(), new Point(300,100),new Point(350, 250)));
-//        lines.add(new Line(Color.WHITE.getRGB(), new Point(350,250),new Point(200, 350)));
-//        lines.add(new Line(Color.WHITE.getRGB(), new Point(200,350),new Point(100, 100)));
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -76,9 +68,6 @@ public class Controller  {
     public void init() {
         canvas.clear();
         polygonRasterizer.rasterize(new Polygon(lines));
-        //rasterizer.rasterize(new Line(Color.WHITE.getRGB(), new Point(100,100),new Point(50, 400)));
-        //rasterizer.rasterize(new Line(Color.WHITE.getRGB(), new Point(200,300),new Point(200, 400)));
-        //rasterizer.rasterize(new Line(Color.WHITE.getRGB(), new Point(150,200),new Point(100, 200)));
 
         //Vstup myší
         canvas.addMouseListener(new MouseAdapter() {
@@ -134,7 +123,6 @@ public class Controller  {
         window.addAction(cursorAction);
         window.addAction(polygonAction);
         window.addAction(deleteAction);
-
         canvas.addMouseMotionListener(new MouseMotionAdapter(){
             public void mouseMoved(MouseEvent e){
                 if(mode != MODE_POLYGON){
@@ -167,7 +155,18 @@ public class Controller  {
                 deleteAll();
             }
         });
-
+        window.getRasterizerBox().addActionListener(e -> {
+            String selected = (String) window.getRasterizerBox().getSelectedItem();
+            if("Trivial".equals(selected)){
+                setRasterizer(new TrivialLineRasterizer(canvas.getRaster()));
+            } else if("DDA".equals(selected)){
+                setRasterizer(new DDALineRasterizer(canvas.getRaster()));
+            } else if ("Bresenham".equals(selected)) {
+                setRasterizer(new BresenhamLineRasterizer(canvas.getRaster()));
+            }else if ("Midpoint".equals(selected)){
+                setRasterizer(new MidpointLineRasterizer(canvas.getRaster()));
+            }
+        });
 
         canvas.addKeyListener(new KeyAdapter() {
             @Override
@@ -207,6 +206,7 @@ public class Controller  {
         }
         render();
     }
+
     //Pomocna metoda
     private Point getMousePoint(MouseEvent e){
         return new Point(e.getX(), e.getY());
@@ -282,14 +282,21 @@ public class Controller  {
     }
 
     private void moveNearestPoint(Point point){
-        List<Line> polygonLines = selectedPolygon.getLines();
-        int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
+        if(selectedPolygon != null){
+            List<Line> polygonLines = selectedPolygon.getLines();
+            int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
 
-        Line previousLine = polygonLines.get(previousIndex);
-        Line currentLine = polygonLines.get(selectedPointIndex);
+            Line previousLine = polygonLines.get(previousIndex);
+            Line currentLine = polygonLines.get(selectedPointIndex);
 
-        polygonLines.set(previousIndex, new Line(LINE_COLOR, previousLine.getPoint1(), point));
-        polygonLines.set(selectedPointIndex, new Line(LINE_COLOR, point, currentLine.getPoint2()));
+            polygonLines.set(previousIndex, new Line(LINE_COLOR, previousLine.getPoint1(), point));
+            polygonLines.set(selectedPointIndex, new Line(LINE_COLOR, point, currentLine.getPoint2()));
+            render();
+        }
+    }
+    private void setRasterizer(LineRasterizer rasterizer){
+        this.rasterizer = rasterizer;
+        this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
         render();
     }
 }
