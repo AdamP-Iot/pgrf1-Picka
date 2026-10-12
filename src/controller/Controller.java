@@ -11,14 +11,15 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+
 import view.Window;
 
 
 /**
  * Handles user input and controls the application flow related to the {@link Canvas}.
  * The controller coordinates input events, canvas operations, and rendering updates.
- *
- *1) Uloha - midpoint/trivialni-y=kx+q/DDA/Bresenhamuv
+ * <p>
+ * 1) Uloha - midpoint/trivialni-y=kx+q/DDA/Bresenhamuv
  * model = data only
  * view = canvas -> vykresleni
  * controller = akce, vstupy uživatele
@@ -27,7 +28,7 @@ import view.Window;
  * @author PGRF FIM UHK
  * @version 2026
  */
-public class Controller  {
+public class Controller {
     private final Canvas canvas;
     private final Window window;
 
@@ -72,35 +73,35 @@ public class Controller  {
         //Vstup myší
         canvas.addMouseListener(new MouseAdapter() {
             @Override
-            public void mousePressed(MouseEvent e){
-                if(mode == MODE_POLYGON){
-                    if(e.getButton() == MouseEvent.BUTTON1){
+            public void mousePressed(MouseEvent e) {
+                if (mode == MODE_POLYGON) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
                         startLine(e);
-                    } else if (e.getButton()== MouseEvent.BUTTON3) {
+                    } else if (e.getButton() == MouseEvent.BUTTON3) {
                         finishPolygon();
-                    } else if(e.getButton() == MouseEvent.BUTTON2){
+                    } else if (e.getButton() == MouseEvent.BUTTON2) {
 
                     }
-                } else if (mode == MODE_CURSOR){
-                    if(e.getButton() == MouseEvent.BUTTON1){
+                } else if (mode == MODE_CURSOR) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
                         selectNearestPoint(getMousePoint(e));
                     }
-                } else if (mode == MODE_DELETE){
-                    if(e.getButton() == MouseEvent.BUTTON1){
+                } else if (mode == MODE_DELETE) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
                         deleteNearestPoint(getMousePoint(e));
                     }
                 }
             }
         });
+        /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= JToolBar Buttons -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
-        //Tlačítka
-        Action polygonAction = new AbstractAction("Polygon"){
+        Action polygonAction = new AbstractAction("Polygon") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 mode = MODE_POLYGON;
             }
         };
-        Action cursorAction = new AbstractAction("Cursor"){
+        Action cursorAction = new AbstractAction("Cursor") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 mode = MODE_CURSOR;
@@ -109,7 +110,7 @@ public class Controller  {
                 render();
             }
         };
-        Action deleteAction = new AbstractAction("Delete Polygon"){
+        Action deleteAction = new AbstractAction("Delete Polygon") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 finishPolygon();
@@ -123,97 +124,99 @@ public class Controller  {
         window.addAction(cursorAction);
         window.addAction(polygonAction);
         window.addAction(deleteAction);
-        canvas.addMouseMotionListener(new MouseMotionAdapter(){
-            public void mouseMoved(MouseEvent e){
-                if(mode != MODE_POLYGON){
+        /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Mouse Listeners -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
+        canvas.addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseMoved(MouseEvent e) {
+                if (mode != MODE_POLYGON) {
                     return;
                 }
 
                 Point mousePoint = getMousePoint(e);
-                if(lastPoint != null){
-                    previewLine = new Line(PREVIEW_COLOR,lastPoint, getMousePoint(e));
+
+                if (lastPoint != null) {
+                    previewLine = new Line(PREVIEW_COLOR, lastPoint, getMousePoint(e));
                 }
-                if(firstPoint != null && lastPoint != null){
-                    previewLine2 = new Line(PREVIEW_COLOR,mousePoint,firstPoint);
+
+                if (firstPoint != null && lastPoint != null) {
+                    previewLine2 = new Line(PREVIEW_COLOR, mousePoint, firstPoint);
                 }
+
                 render();
             }
+
             @Override
-            public void mouseDragged(MouseEvent e){
-                if(mode == MODE_CURSOR){
+            public void mouseDragged(MouseEvent e) {
+                if (mode == MODE_CURSOR) {
                     moveNearestPoint(getMousePoint(e));
                 }
             }
         });
+        /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Keybinds -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
         window.getRootPane()    //ošetření ztraceného focus, když klikáme do JToolBaru
                 .getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                 .put(KeyStroke.getKeyStroke(KeyEvent.VK_C, 0), "delete");
-        window.getRootPane().getActionMap().put("delete", new AbstractAction(){
+
+        window.getRootPane().getActionMap().put("delete", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 deleteAll();
             }
         });
+        /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Line Rasterizer Change -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
         window.getRasterizerBox().addActionListener(e -> {
             String selected = (String) window.getRasterizerBox().getSelectedItem();
-            if("Trivial".equals(selected)){
+
+            if ("Trivial".equals(selected)) {
                 setRasterizer(new TrivialLineRasterizer(canvas.getRaster()));
-            } else if("DDA".equals(selected)){
+            } else if ("DDA".equals(selected)) {
                 setRasterizer(new DDALineRasterizer(canvas.getRaster()));
             } else if ("Bresenham".equals(selected)) {
                 setRasterizer(new BresenhamLineRasterizer(canvas.getRaster()));
-            }else if ("Midpoint".equals(selected)){
+            } else if ("Midpoint".equals(selected)) {
                 setRasterizer(new MidpointLineRasterizer(canvas.getRaster()));
             }
         });
-
-        canvas.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if(e.getKeyCode() == KeyEvent.VK_C){
-                    deleteAll();
-                    render();
-                }
-            }
-        });
-        canvas.repaint();
     }
-    public void render(){
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Helper Methods -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
+    public void render() {   //překreslení canvasu
         canvas.clear();
-        for(Polygon polygon : polygons){    //už nakreslené polygony
+        for (Polygon polygon : polygons) {    //už nakreslené polygony
             polygonRasterizer.rasterize(polygon);
         }
 
-        polygonRasterizer.rasterize(new Polygon(lines));    //právě kreslený polygon
+        polygonRasterizer.rasterize(new Polygon(lines));   //právě kreslený polygon
 
-        if(previewLine != null){
+        if (previewLine != null) {
             rasterizer.rasterize(previewLine);
         }
-        if(previewLine2 != null){
+        if (previewLine2 != null) {
             rasterizer.rasterize(previewLine2);
         }
         canvas.repaint();
     }
-    private void startLine(MouseEvent e){
+
+    private void startLine(MouseEvent e) {   //začátek vykreslení line
         Point point = getMousePoint(e);
-        if(firstPoint == null){
+        if (firstPoint == null) {
             firstPoint = point;
             lastPoint = point;
-        } else{
+        } else {
             lines.add(new Line(LINE_COLOR, lastPoint, point));
             lastPoint = point;
         }
         render();
     }
 
-    //Pomocna metoda
-    private Point getMousePoint(MouseEvent e){
+    private Point getMousePoint(MouseEvent e) {  //Pomocna metoda pro souřadnici myši
         return new Point(e.getX(), e.getY());
     }
 
-    private void finishPolygon(){
-        if(firstPoint != null && lastPoint != null && firstPoint != lastPoint){
+    private void finishPolygon() {   //konec vykreslování
+        if (firstPoint != null && lastPoint != null && firstPoint != lastPoint) {
             lines.add(new Line(LINE_COLOR, lastPoint, firstPoint));
         }
         polygons.add(new Polygon(new ArrayList<>(lines)));
@@ -226,7 +229,8 @@ public class Controller  {
 
         render();
     }
-    private void deleteAll(){
+
+    private void deleteAll() {   //vymazání všech prvků na canvasu
         polygons.clear();
         lines.clear();
         previewLine = null;
@@ -237,23 +241,23 @@ public class Controller  {
         canvas.repaint();
     }
 
-    private void selectNearestPoint(Point mousePoint){
+    private void selectNearestPoint(Point mousePoint) {  //metoda pro získání nejlbižšího bodu
         double nearestDistance = Double.MAX_VALUE;
         selectedPolygon = null;
         selectedPointIndex = -1;
 
-        for(Polygon polygon : polygons){
+        for (Polygon polygon : polygons) {
 
             List<Line> polygonLines = polygon.getLines();
 
-            for(int i = 0; i < polygonLines.size(); i++){
+            for (int i = 0; i < polygonLines.size(); i++) {
 
                 Point point = polygonLines.get(i).getPoint1();
                 double dx = mousePoint.getX() - point.getX();
                 double dy = mousePoint.getY() - point.getY();
                 double distance = Math.sqrt(dx * dx + dy * dy);
 
-                if(distance < nearestDistance) {
+                if (distance < nearestDistance) {
                     nearestDistance = distance;
                     selectedPolygon = polygon;
                     selectedPointIndex = i;
@@ -261,14 +265,15 @@ public class Controller  {
             }
         }
     }
-    private void deleteNearestPoint(Point mousePoint){
+
+    private void deleteNearestPoint(Point mousePoint) {  //metoda pro vymazání nejbližšího bodu
         selectNearestPoint(mousePoint);
-        if(selectedPolygon == null || selectedPointIndex == -1){
+        if (selectedPolygon == null || selectedPointIndex == -1) {
             return;
         }
 
         List<Line> polygonLines = selectedPolygon.getLines();    //edit polygonů
-        int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
+        int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex == 0
 
         Line previousLine = polygonLines.get(previousIndex);
         Line currentLine = polygonLines.get(selectedPointIndex);
@@ -281,20 +286,22 @@ public class Controller  {
         render();
     }
 
-    private void moveNearestPoint(Point point){
-        if(selectedPolygon != null){
+    private void moveNearestPoint(Point point) { //metoda pro pohnutí nejbližšího bodu
+        if (selectedPolygon != null) {
+
             List<Line> polygonLines = selectedPolygon.getLines();
-            int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
+            int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size();
 
             Line previousLine = polygonLines.get(previousIndex);
             Line currentLine = polygonLines.get(selectedPointIndex);
 
-            polygonLines.set(previousIndex, new Line(LINE_COLOR, previousLine.getPoint1(), point));
-            polygonLines.set(selectedPointIndex, new Line(LINE_COLOR, point, currentLine.getPoint2()));
+            polygonLines.set(previousIndex, new Line(LINE_COLOR, previousLine.getPoint1(), point)); //první select
+            polygonLines.set(selectedPointIndex, new Line(LINE_COLOR, point, currentLine.getPoint2())); //druhý select
             render();
         }
     }
-    private void setRasterizer(LineRasterizer rasterizer){
+
+    private void setRasterizer(LineRasterizer rasterizer) {  //setter pro vybraný vykreslovací algoritmus
         this.rasterizer = rasterizer;
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
         render();

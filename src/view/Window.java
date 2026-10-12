@@ -2,6 +2,7 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+
 import controller.Controller;
 
 /**
@@ -45,21 +46,25 @@ public class Window extends JFrame {
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= JToolBar -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
-    private JToolBar ToolBar(){
+    private JToolBar ToolBar() {
         tb = new JToolBar();
         tb.setVisible(true);
 
-        String[] rasterizers = {"Trivial","DDA","Bresenham","Midpoint"};
+        String[] rasterizers = {"Trivial", "DDA", "Bresenham", "Midpoint"};
         rasterizerBox = new JComboBox<>(rasterizers);
-        rasterizerBox.setMaximumSize(new Dimension(120,25));
+        rasterizerBox.setMaximumSize(new Dimension(120, 25));
         tb.add(rasterizerBox);
 
         return tb;
-    };
-    public void addAction(Action action){
+    }
+
+    ;
+
+    public void addAction(Action action) {
         tb.add(action);
     }
-    public JComboBox<String> getRasterizerBox(){
+
+    public JComboBox<String> getRasterizerBox() {
         return rasterizerBox;
     }
 }

@@ -5,18 +5,21 @@ public class Line {
     private final Point point2;
     private final int color;
 
-    public Line(int color, Point point1, Point point2){
+    public Line(int color, Point point1, Point point2) {
         this.color = color;
         this.point1 = point1;
         this.point2 = point2;
     }
-    public int getColor(){
+
+    public int getColor() {
         return color;
     }
-    public Point getPoint1(){
+
+    public Point getPoint1() {
         return point1;
     }
-    public Point getPoint2(){
+
+    public Point getPoint2() {
         return point2;
     }
 }
