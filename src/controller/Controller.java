@@ -47,12 +47,13 @@ public class Controller  {
     private Point firstPoint;
     private Point lastPoint;
 
+    private int mode = MODE_POLYGON;
     private static final int MODE_POLYGON = 0;
     private static final int MODE_CURSOR = 1;
     private static final int MODE_DELETE = 2;
 
-    private int mode = MODE_POLYGON;
-
+    private Polygon selectedPolygon;
+    private int selectedPointIndex;
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -93,19 +94,16 @@ public class Controller  {
                     }
                 } else if (mode == MODE_CURSOR){
                     if(e.getButton() == MouseEvent.BUTTON1){
-
-                    } else if (e.getButton()== MouseEvent.BUTTON3) {
-
-                    } else if(e.getButton() == MouseEvent.BUTTON2){
-
+                        selectNearestPoint(getMousePoint(e));
                     }
                 } else if (mode == MODE_DELETE){
                     if(e.getButton() == MouseEvent.BUTTON1){
-                        deleteNearestPoint(getPoint(e));
+                        deleteNearestPoint(getMousePoint(e));
                     }
                 }
             }
         });
+
         //Tlačítka
         Action polygonAction = new AbstractAction("Polygon"){
             @Override
@@ -125,6 +123,7 @@ public class Controller  {
         Action deleteAction = new AbstractAction("Delete Polygon"){
             @Override
             public void actionPerformed(ActionEvent e) {
+                finishPolygon();
                 mode = MODE_DELETE;
                 previewLine = null;
                 previewLine2 = null;
@@ -142,14 +141,20 @@ public class Controller  {
                     return;
                 }
 
-                Point mousePoint = getPoint(e);
+                Point mousePoint = getMousePoint(e);
                 if(lastPoint != null){
-                    previewLine = new Line(PREVIEW_COLOR,lastPoint,getPoint(e));
+                    previewLine = new Line(PREVIEW_COLOR,lastPoint, getMousePoint(e));
                 }
                 if(firstPoint != null && lastPoint != null){
                     previewLine2 = new Line(PREVIEW_COLOR,mousePoint,firstPoint);
                 }
                 render();
+            }
+            @Override
+            public void mouseDragged(MouseEvent e){
+                if(mode == MODE_CURSOR){
+                    moveNearestPoint(getMousePoint(e));
+                }
             }
         });
 
@@ -192,7 +197,7 @@ public class Controller  {
         canvas.repaint();
     }
     private void startLine(MouseEvent e){
-        Point point = getPoint(e);
+        Point point = getMousePoint(e);
         if(firstPoint == null){
             firstPoint = point;
             lastPoint = point;
@@ -203,9 +208,10 @@ public class Controller  {
         render();
     }
     //Pomocna metoda
-    private Point getPoint(MouseEvent e){
+    private Point getMousePoint(MouseEvent e){
         return new Point(e.getX(), e.getY());
     }
+
     private void finishPolygon(){
         if(firstPoint != null && lastPoint != null && firstPoint != lastPoint){
             lines.add(new Line(LINE_COLOR, lastPoint, firstPoint));
@@ -230,44 +236,60 @@ public class Controller  {
         canvas.clear();
         canvas.repaint();
     }
-    private void deleteNearestPoint(Point mousePoint){
+
+    private void selectNearestPoint(Point mousePoint){
         double nearestDistance = Double.MAX_VALUE;
-        Polygon nearestPolygon = null;
-        int nearestIndex = -1;
+        selectedPolygon = null;
+        selectedPointIndex = -1;
 
         for(Polygon polygon : polygons){
-            List<Line> polygonLines = polygon.getLines();   //hrany aktuálního polygonu
+
+            List<Line> polygonLines = polygon.getLines();
+
             for(int i = 0; i < polygonLines.size(); i++){
 
-                Point point = polygonLines.get(i).getPoint1();  //projdeme je a vypočítáme vzdálenost mezi body
+                Point point = polygonLines.get(i).getPoint1();
                 double dx = mousePoint.getX() - point.getX();
                 double dy = mousePoint.getY() - point.getY();
                 double distance = Math.sqrt(dx * dx + dy * dy);
 
-                if(distance < nearestDistance){
+                if(distance < nearestDistance) {
                     nearestDistance = distance;
-                    nearestPolygon = polygon;
-                    nearestIndex = i;
-
+                    selectedPolygon = polygon;
+                    selectedPointIndex = i;
                 }
             }
         }
-        if(nearestPolygon == null ){
+    }
+    private void deleteNearestPoint(Point mousePoint){
+        selectNearestPoint(mousePoint);
+        if(selectedPolygon == null || selectedPointIndex == -1){
             return;
         }
 
-        List<Line> polygonLines = nearestPolygon.getLines();    //edit polygonů
-        int previousIndex = (nearestIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
+        List<Line> polygonLines = selectedPolygon.getLines();    //edit polygonů
+        int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
 
         Line previousLine = polygonLines.get(previousIndex);
-        Line currentLine = polygonLines.get(nearestIndex);
+        Line currentLine = polygonLines.get(selectedPointIndex);
 
         Point previousPoint = previousLine.getPoint1();
         Point nextPoint = currentLine.getPoint2();
 
         polygonLines.set(previousIndex, new Line(LINE_COLOR, previousPoint, nextPoint));
-        polygonLines.remove(nearestIndex);
+        polygonLines.remove(selectedPointIndex);
         render();
+    }
 
+    private void moveNearestPoint(Point point){
+        List<Line> polygonLines = selectedPolygon.getLines();
+        int previousIndex = (selectedPointIndex - 1 + polygonLines.size()) % polygonLines.size(); //ošetření když nearestIndex==0
+
+        Line previousLine = polygonLines.get(previousIndex);
+        Line currentLine = polygonLines.get(selectedPointIndex);
+
+        polygonLines.set(previousIndex, new Line(LINE_COLOR, previousLine.getPoint1(), point));
+        polygonLines.set(selectedPointIndex, new Line(LINE_COLOR, point, currentLine.getPoint2()));
+        render();
     }
 }
