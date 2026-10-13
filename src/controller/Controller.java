@@ -79,8 +79,6 @@ public class Controller {
                         startLine(e);
                     } else if (e.getButton() == MouseEvent.BUTTON3) {
                         finishPolygon();
-                    } else if (e.getButton() == MouseEvent.BUTTON2) {
-
                     }
                 } else if (mode == MODE_CURSOR) {
                     if (e.getButton() == MouseEvent.BUTTON1) {

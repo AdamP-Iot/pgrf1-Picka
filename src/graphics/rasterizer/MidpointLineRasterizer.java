@@ -20,6 +20,15 @@ public class MidpointLineRasterizer implements LineRasterizer {
                 line.getColor()
         );
     }
+    /**
+     * Midpoint algoritmus
+     *
+     * @param x1 x souřadnice prvního bodu
+     * @param x2 x souřadnice druhého bodu
+     * @param y1 y souřadnice prvního bodu
+     * @param y2 y souřadnice druhého bodu
+     * @param color barva vykreslované úsečky
+     */
     private void rasterize(int x1, int x2, int y1, int y2, int color){
         raster.setPixel(x1, y1, color);
         raster.setPixel(x2, y2, color);
