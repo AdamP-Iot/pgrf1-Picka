@@ -19,7 +19,6 @@ import view.Window;
  * Handles user input and controls the application flow related to the {@link Canvas}.
  * The controller coordinates input events, canvas operations, and rendering updates.
  * <p>
- * 1) Uloha - midpoint/trivialni-y=kx+q/DDA/Bresenhamuv
  * model = data only
  * view = canvas -> vykresleni
  * controller = akce, vstupy uživatele

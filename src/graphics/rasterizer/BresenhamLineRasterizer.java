@@ -20,13 +20,14 @@ public class BresenhamLineRasterizer implements LineRasterizer {
                 line.getColor()
         );
     }
+
     /**
      * Bresenhemův algoritmus
      *
-     * @param x1 x souřadnice prvního bodu
-     * @param x2 x souřadnice druhého bodu
-     * @param y1 y souřadnice prvního bodu
-     * @param y2 y souřadnice druhého bodu
+     * @param x1    x souřadnice prvního bodu
+     * @param x2    x souřadnice druhého bodu
+     * @param y1    y souřadnice prvního bodu
+     * @param y2    y souřadnice druhého bodu
      * @param color barva vykreslované úsečky
      */
     private void rasterize(int x1, int x2, int y1, int y2, int color) {
