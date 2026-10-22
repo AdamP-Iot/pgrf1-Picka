@@ -37,16 +37,13 @@ public class Canvas extends JPanel {
         raster.clear(BACKGROUND_COLOR.getRGB());
     }
 
-    /**
-     * Paints the current raster image onto this canvas. Swing calls this method automatically whenever the component
-     * needs to be repainted.
-     *
-     * @param graphics graphics context used for painting the component
-     */
     @Override
     protected void paintComponent(Graphics graphics) { //nesahat
         super.paintComponent(graphics);
         raster.present(graphics);
+    }
+    public Color getBackgroundColor() {
+        return BACKGROUND_COLOR;
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Getters -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */

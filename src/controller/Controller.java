@@ -2,6 +2,7 @@ package controller;
 
 import graphics.filler.RecursiveSeedFiller;
 import graphics.filler.SeedFiller;
+import graphics.filler.StackSeedFiller;
 import graphics.rasterizer.*;
 import view.Canvas;
 import model.Line;
@@ -57,7 +58,7 @@ public class Controller {
     private int selectedPointIndex;
 
     private final SeedFiller seedFiller;
-
+    private int fillColor = Color.RED.getRGB();
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -68,7 +69,7 @@ public class Controller {
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
         this.polygons = new ArrayList<>();
         this.lines = new ArrayList<>();
-        this.seedFiller = new RecursiveSeedFiller(canvas.getRaster());
+        this.seedFiller = new StackSeedFiller(canvas.getRaster());
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -97,11 +98,16 @@ public class Controller {
                     }
                 } else if (mode == MODE_FILL) {
                     if(e.getButton() == MouseEvent.BUTTON1) {
+                        Color selectedColor = JColorChooser.showDialog(window, "Choose color",new Color(fillColor, true));
+                        if(selectedColor != null) {
+                            fillColor = selectedColor.getRGB();
+                        }
+
                         Point point = getMousePoint(e);
                         Integer targetColor = canvas.getRaster().getPixel(point.getX(), point.getY());
 
                         if (targetColor != null) {
-                            seedFiller.fill(point.getX(), point.getY(), targetColor, Color.RED.getRGB());
+                            seedFiller.fill(point.getX(), point.getY(), targetColor, fillColor);
                             canvas.repaint();
                         }
                     }
@@ -123,17 +129,14 @@ public class Controller {
                 mode = MODE_CURSOR;
                 previewLine = null;
                 previewLine2 = null;
-                render();
             }
         };
         Action deleteAction = new AbstractAction("Delete Polygon") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                finishPolygon();
                 mode = MODE_DELETE;
                 previewLine = null;
                 previewLine2 = null;
-                render();
             }
         };
         Action fillAction = new AbstractAction("Fill Polygon") {
@@ -142,13 +145,13 @@ public class Controller {
                 mode = MODE_FILL;
                 previewLine = null;
                 previewLine2 = null;
-                render();
+
             }
         };
         //Odeslání tlačítka do JToolBaru
-        window.addAction(cursorAction);
         window.addAction(polygonAction);
         window.addAction(deleteAction);
+        window.addAction(cursorAction);
         window.addAction(fillAction);
         /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Mouse Listeners -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -331,6 +334,5 @@ public class Controller {
     private void setRasterizer(LineRasterizer rasterizer) {  //setter pro vybraný vykreslovací algoritmus
         this.rasterizer = rasterizer;
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
-        render();
     }
 }
