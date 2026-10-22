@@ -11,5 +11,6 @@ public interface Raster<P> {
 
     void present(Graphics graphics);
 
-    void setPixel(int x, int y, P value);
+    Integer getPixel(int x, int y);
+    void setPixel(int x, int y, Integer value);
 }

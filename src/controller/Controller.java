@@ -1,5 +1,7 @@
 package controller;
 
+import graphics.filler.RecursiveSeedFiller;
+import graphics.filler.SeedFiller;
 import graphics.rasterizer.*;
 import view.Canvas;
 import model.Line;
@@ -9,6 +11,7 @@ import model.Polygon;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,9 +51,13 @@ public class Controller {
     private static final int MODE_POLYGON = 0;
     private static final int MODE_CURSOR = 1;
     private static final int MODE_DELETE = 2;
+    private static final int MODE_FILL = 3;
 
     private Polygon selectedPolygon;
     private int selectedPointIndex;
+
+    private final SeedFiller seedFiller;
+
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -61,6 +68,7 @@ public class Controller {
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
         this.polygons = new ArrayList<>();
         this.lines = new ArrayList<>();
+        this.seedFiller = new RecursiveSeedFiller(canvas.getRaster());
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -86,6 +94,16 @@ public class Controller {
                 } else if (mode == MODE_DELETE) {
                     if (e.getButton() == MouseEvent.BUTTON1) {
                         deleteNearestPoint(getMousePoint(e));
+                    }
+                } else if (mode == MODE_FILL) {
+                    if(e.getButton() == MouseEvent.BUTTON1) {
+                        Point point = getMousePoint(e);
+                        Integer targetColor = canvas.getRaster().getPixel(point.getX(), point.getY());
+
+                        if (targetColor != null) {
+                            seedFiller.fill(point.getX(), point.getY(), targetColor, Color.RED.getRGB());
+                            canvas.repaint();
+                        }
                     }
                 }
             }
@@ -118,10 +136,20 @@ public class Controller {
                 render();
             }
         };
+        Action fillAction = new AbstractAction("Fill Polygon") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mode = MODE_FILL;
+                previewLine = null;
+                previewLine2 = null;
+                render();
+            }
+        };
         //Odeslání tlačítka do JToolBaru
         window.addAction(cursorAction);
         window.addAction(polygonAction);
         window.addAction(deleteAction);
+        window.addAction(fillAction);
         /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Mouse Listeners -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
         canvas.addMouseMotionListener(new MouseMotionAdapter() {
@@ -194,6 +222,7 @@ public class Controller {
         if (previewLine2 != null) {
             rasterizer.rasterize(previewLine2);
         }
+
         canvas.repaint();
     }
 

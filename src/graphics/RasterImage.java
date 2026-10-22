@@ -34,6 +34,11 @@ public class RasterImage implements Raster<Integer> {
     }
 
     @Override
+    public Integer getPixel(int x, int y) {
+        return image.getRGB(x, y);
+    }
+
+    @Override
     public void setPixel(int x, int y, Integer value) {
         if (x >= 0 && x < getWidth() && y >= 0 && y < getHeight()) {
             image.setRGB(x, y, value);
