@@ -18,6 +18,7 @@ public class Window extends JFrame {
     private final Canvas canvas;
     private JToolBar tb;
     JComboBox<String> rasterizerBox;
+    JComboBox<String> fillerBox;
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -26,13 +27,10 @@ public class Window extends JFrame {
         setTitle("FIM UHK | PGRF1 | 2026 | [Adam Picka]");
         setLayout(new BorderLayout());
         setResizable(false); //extBody kdyz true
-
         canvas = new Canvas(width, height);
         add(canvas, BorderLayout.CENTER);
         add(ToolBar(), BorderLayout.NORTH);
-
         pack();
-
         setLocationRelativeTo(null);
         canvas.setFocusable(true);
         canvas.grabFocus();
@@ -56,27 +54,26 @@ public class Window extends JFrame {
                 BorderFactory.createEmptyBorder(8, 10, 10, 10)
         ));
         String[] rasterizers = {"Trivial", "DDA", "Bresenham", "Midpoint"};
+        String[] fillers ={"SeedFiller", "ScanLineFiller"};
+        /* -=-=-=-=-=-=-=-=-=- RasterizerBox gui -=-=-=-=-=-=-=-=-=- */
 
-        Dimension componentSize = new Dimension(180,35);
+
         rasterizerBox = new JComboBox<>(rasterizers);
-        rasterizerBox.setMaximumSize(new Dimension(120, 25));
-        rasterizerBox.setBackground(new Color(0x343434));
-        rasterizerBox.setForeground(Color.WHITE);
-        rasterizerBox.setPreferredSize(componentSize);
-        rasterizerBox.setMaximumSize(componentSize);
-        rasterizerBox.setMinimumSize(componentSize);
-        rasterizerBox.setFont(new Font(Font.SERIF, Font.BOLD, 16));
-        rasterizerBox.setBorder(BorderFactory.createLineBorder(new Color(0x4A4A4A),1));
+        fillerBox = new JComboBox<>(fillers);
+        styleComboBox(rasterizerBox);
+        styleComboBox(fillerBox);
 
         tb.add(rasterizerBox);
+        tb.add(fillerBox);
         tb.add(Box.createHorizontalStrut(12));
 
         return tb;
     }
 
     public void addAction(Action action) {
-        JButton button = tb.add(action);
+        /* -=-=-=-=-=-=-=-=-=- Buttons gui -=-=-=-=-=-=-=-=-=- */
 
+        JButton button = tb.add(action);
         button.setIconTextGap(8);
         button.setBackground(new Color(0x2F2F2F));
         button.setForeground(Color.WHITE);
@@ -89,11 +86,22 @@ public class Window extends JFrame {
                 BorderFactory.createEmptyBorder(7, 14, 7, 14)
         ));
         tb.add(Box.createHorizontalStrut(8));
-
-
     }
-
+    private void styleComboBox(JComboBox<String> box) {
+        Dimension componentSize = new Dimension(180,35);
+        box.setMaximumSize(new Dimension(120, 25));
+        box.setBackground(new Color(0x343434));
+        box.setForeground(Color.WHITE);
+        box.setPreferredSize(componentSize);
+        box.setMaximumSize(componentSize);
+        box.setMinimumSize(componentSize);
+        box.setFont(new Font(Font.SERIF, Font.BOLD, 16));
+        box.setBorder(BorderFactory.createLineBorder(new Color(0x4A4A4A),1));
+    }
     public JComboBox<String> getRasterizerBox() {
         return rasterizerBox;
+    }
+    public JComboBox<String> getFillerBox() {
+        return fillerBox;
     }
 }

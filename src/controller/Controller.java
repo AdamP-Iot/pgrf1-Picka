@@ -1,8 +1,6 @@
 package controller;
 
-import graphics.filler.RecursiveSeedFiller;
-import graphics.filler.SeedFiller;
-import graphics.filler.StackSeedFiller;
+import graphics.filler.*;
 import graphics.rasterizer.*;
 import view.Canvas;
 import model.Line;
@@ -57,8 +55,10 @@ public class Controller {
     private Polygon selectedPolygon;
     private int selectedPointIndex;
 
+    private String selectedFiller = "SeedFiller";
     private final SeedFiller seedFiller;
     private int fillColor = Color.RED.getRGB();
+    private final PolygonFiller polygonFiller;
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -70,6 +70,7 @@ public class Controller {
         this.polygons = new ArrayList<>();
         this.lines = new ArrayList<>();
         this.seedFiller = new StackSeedFiller(canvas.getRaster());
+        this.polygonFiller = new ScanLineFiller(canvas.getRaster());
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -96,18 +97,25 @@ public class Controller {
                     if (e.getButton() == MouseEvent.BUTTON1) {
                         deleteNearestPoint(getMousePoint(e));
                     }
-                } else if (mode == MODE_FILL) {
-                    if(e.getButton() == MouseEvent.BUTTON1) {
-                        Color selectedColor = JColorChooser.showDialog(window, "Choose color",new Color(fillColor, true));
-                        if(selectedColor != null) {
+                } else if (mode == MODE_FILL) { //JColorChooser pro výběr barvy na fill
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        Color selectedColor = JColorChooser.showDialog(window, "", new Color(fillColor, true));
+                        if (selectedColor != null) {
                             fillColor = selectedColor.getRGB();
                         }
-
                         Point point = getMousePoint(e);
                         Integer targetColor = canvas.getRaster().getPixel(point.getX(), point.getY());
 
                         if (targetColor != null) {
-                            seedFiller.fill(point.getX(), point.getY(), targetColor, fillColor);
+                            if ("SeedFiller".equals(selectedFiller)) {
+                                seedFiller.fill(point.getX(), point.getY(), targetColor, fillColor);
+                            } else if ("ScanLineFiller".equals(selectedFiller)) {
+                                selectNearestPoint(point);
+                                if (selectedPolygon != null) {
+                                    selectedPolygon.setFillColor(fillColor);
+                                    render();
+                                }
+                            }
                             canvas.repaint();
                         }
                     }
@@ -145,7 +153,6 @@ public class Controller {
                 mode = MODE_FILL;
                 previewLine = null;
                 previewLine2 = null;
-
             }
         };
         //Odeslání tlačítka do JToolBaru
@@ -193,6 +200,15 @@ public class Controller {
                 deleteAll();
             }
         });
+        window.getRootPane()
+                .getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+                .put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0), "shift");
+        window.getRootPane().getActionMap().put("shift", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            }
+        });
+
         /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Line Rasterizer Change -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
         window.getRasterizerBox().addActionListener(e -> {
@@ -208,12 +224,24 @@ public class Controller {
                 setRasterizer(new MidpointLineRasterizer(canvas.getRaster()));
             }
         });
+        window.getFillerBox().addActionListener(e -> {
+            String selected = (String) window.getFillerBox().getSelectedItem();
+            if ("SeedFiller".equals(selected)) {
+                setFiller("SeedFiller");
+            } else if ("ScanLineFiller".equals(selected)) {
+                setFiller("ScanLineFiller");
+            }
+        });
     }
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Helper Methods -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
     public void render() {   //překreslení canvasu
         canvas.clear();
-        for (Polygon polygon : polygons) {    //už nakreslené polygony
+        for (Polygon polygon : polygons) { //už nakreslené polygony
+           //uchování barev
+            if(polygon.getFillColor() != null) {
+                polygonFiller.fill(polygon,polygon.getFillColor());
+            }
             polygonRasterizer.rasterize(polygon);
         }
 
@@ -334,5 +362,8 @@ public class Controller {
     private void setRasterizer(LineRasterizer rasterizer) {  //setter pro vybraný vykreslovací algoritmus
         this.rasterizer = rasterizer;
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
+    }
+    private void setFiller(String selectedFiller) {
+        this.selectedFiller = selectedFiller;
     }
 }
