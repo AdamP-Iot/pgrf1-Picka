@@ -1,5 +1,6 @@
 package controller;
 
+import graphics.clipping.SutherlandHodgmanClipper;
 import graphics.filler.*;
 import graphics.rasterizer.*;
 import view.Canvas;
@@ -51,6 +52,8 @@ public class Controller {
     private static final int MODE_CURSOR = 1;
     private static final int MODE_DELETE = 2;
     private static final int MODE_FILL = 3;
+    private static final int MODE_CLIP = 4;
+
 
     private Polygon selectedPolygon;
     private int selectedPointIndex;
@@ -59,6 +62,10 @@ public class Controller {
     private final SeedFiller seedFiller;
     private int fillColor = Color.RED.getRGB();
     private final PolygonFiller polygonFiller;
+
+    private SutherlandHodgmanClipper polygonClipper;
+    private final List<Point> clipPoints = new ArrayList<>();
+    // přístí cviko clip primkou
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -71,6 +78,7 @@ public class Controller {
         this.lines = new ArrayList<>();
         this.seedFiller = new StackSeedFiller(canvas.getRaster());
         this.polygonFiller = new ScanLineFiller(canvas.getRaster());
+        this.polygonClipper = new SutherlandHodgmanClipper();
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -119,6 +127,42 @@ public class Controller {
                             canvas.repaint();
                         }
                     }
+                } else if (mode == MODE_CLIP) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        startLine(e);
+                    } else if (e.getButton() == MouseEvent.BUTTON3  && lines.size() >= 2) {
+                        finishPolygon();
+                        Polygon boundary = polygons.removeLast();
+                        List<Polygon> results = new ArrayList<>();
+
+                        for(Polygon subject : polygons){
+                            Polygon clipped = polygonClipper.clip(subject, boundary);
+                            List<Line> edges = clipped.getLines();
+
+                            if (edges.isEmpty()) {
+                                continue;
+                            }
+
+                            Point first = edges.getFirst().getPoint1();
+                            Point last = edges.getLast().getPoint2();
+
+                            if (first.getX() != last.getX() || first.getY() != last.getY()) {
+                                edges.add(new Line(edges.getFirst().getColor(), last, first));
+                            }
+
+                            if (subject.getFillColor() != null) {
+                                clipped.setFillColor(subject.getFillColor());
+                            }
+                            results.add(clipped);
+                        }
+                        if(!results.isEmpty()){
+                            polygons.clear();
+                            polygons.addAll(results);
+                        }
+                        selectedPolygon = null;
+                        selectedPointIndex = -1;
+                        render();
+                    }
                 }
             }
         });
@@ -155,16 +199,26 @@ public class Controller {
                 previewLine2 = null;
             }
         };
+        Action clipAction = new AbstractAction("Cut Polygon by Polygon") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mode = MODE_CLIP;
+                clipPoints.clear();
+                previewLine = null;
+                previewLine2 = null;
+            }
+        };
         //Odeslání tlačítka do JToolBaru
         window.addAction(polygonAction);
         window.addAction(deleteAction);
         window.addAction(cursorAction);
         window.addAction(fillAction);
+        window.addAction(clipAction);
         /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Mouse Listeners -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
         canvas.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
-                if (mode != MODE_POLYGON) {
+                if (mode != MODE_POLYGON && mode != MODE_CLIP) {
                     return;
                 }
 
