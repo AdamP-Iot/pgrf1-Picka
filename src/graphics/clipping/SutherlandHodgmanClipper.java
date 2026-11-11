@@ -22,9 +22,7 @@ public final class SutherlandHodgmanClipper implements PolygonClipper {
 
         double boundaryArea = area(boundaryVertices);
         if (boundaryVertices.size() < 3 || boundaryArea == 0) {
-            throw new IllegalArgumentException(
-                    "Polygon musí mít alespoň tři vrcholy."
-            );
+            throw new IllegalArgumentException("Polygon musí mít alespoň tři vrcholy.");
         }
 
         boolean ccw = boundaryArea > 0;

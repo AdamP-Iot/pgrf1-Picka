@@ -36,8 +36,11 @@ public class Controller {
 
     private LineRasterizer rasterizer;
     private PolygonRasterizer polygonRasterizer;
+
     private final List<Line> lines;
+    private final List<Line> standaloneLines;
     private final List<Polygon> polygons;
+    private Point lineStart;
 
     private Line previewLine;
     private Line previewLine2;
@@ -47,25 +50,29 @@ public class Controller {
     private Point firstPoint;
     private Point lastPoint;
 
+
     private int mode = MODE_POLYGON;
     private static final int MODE_POLYGON = 0;
     private static final int MODE_CURSOR = 1;
     private static final int MODE_DELETE = 2;
     private static final int MODE_FILL = 3;
-    private static final int MODE_CLIP = 4;
+    private static final int MODE_CLIP_POLYGON = 4;
+    private static final int MODE_LINE = 5;
+    private static final int MODE_CLIP_LINE = 6;
 
 
     private Polygon selectedPolygon;
     private int selectedPointIndex;
 
-    private String selectedFiller = "SeedFiller";
+    private String selectedFiller = "ScanLineFiller";
     private final SeedFiller seedFiller;
     private int fillColor = Color.RED.getRGB();
     private final PolygonFiller polygonFiller;
 
     private SutherlandHodgmanClipper polygonClipper;
     private final List<Point> clipPoints = new ArrayList<>();
-    // přístí cviko clip primkou
+
+
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -79,6 +86,7 @@ public class Controller {
         this.seedFiller = new StackSeedFiller(canvas.getRaster());
         this.polygonFiller = new ScanLineFiller(canvas.getRaster());
         this.polygonClipper = new SutherlandHodgmanClipper();
+        this.standaloneLines = new ArrayList<>();
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -127,7 +135,7 @@ public class Controller {
                             canvas.repaint();
                         }
                     }
-                } else if (mode == MODE_CLIP) {
+                } else if (mode == MODE_CLIP_POLYGON) {
                     if (e.getButton() == MouseEvent.BUTTON1) {
                         startLine(e);
                     } else if (e.getButton() == MouseEvent.BUTTON3  && lines.size() >= 2) {
@@ -162,6 +170,10 @@ public class Controller {
                         selectedPolygon = null;
                         selectedPointIndex = -1;
                         render();
+                    }
+                } else if (mode == MODE_LINE) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        lineStart = getMousePoint(e);
                     }
                 }
             }
@@ -202,23 +214,39 @@ public class Controller {
         Action clipAction = new AbstractAction("Cut Polygon by Polygon") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                mode = MODE_CLIP;
+                mode = MODE_CLIP_POLYGON;
                 clipPoints.clear();
                 previewLine = null;
                 previewLine2 = null;
             }
         };
+        Action lineAction = new AbstractAction("Line") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mode = MODE_LINE;
+                previewLine = null;
+                previewLine2 = null;
+            }
+        };
+        Action clipLine = new AbstractAction("Cut Line") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO: Implementovat Cohen-Sutherland
+            }
+        };
         //Odeslání tlačítka do JToolBaru
         window.addAction(polygonAction);
         window.addAction(deleteAction);
-        window.addAction(cursorAction);
         window.addAction(fillAction);
         window.addAction(clipAction);
+        window.addAction(lineAction);
+        window.addAction(clipLine);
+        window.addAction(cursorAction);
         /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Mouse Listeners -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
         canvas.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
-                if (mode != MODE_POLYGON && mode != MODE_CLIP) {
+                if (mode != MODE_POLYGON && mode != MODE_CLIP_POLYGON) {
                     return;
                 }
 
@@ -239,6 +267,31 @@ public class Controller {
             public void mouseDragged(MouseEvent e) {
                 if (mode == MODE_CURSOR) {
                     moveNearestPoint(getMousePoint(e));
+                } else if (mode == MODE_LINE && lineStart != null) {
+                    Point endPoint = getMousePoint(e);
+
+                    if (e.isShiftDown()) {
+                        endPoint = angleLock(lineStart, endPoint);
+                    }
+
+                    previewLine = new Line(PREVIEW_COLOR, lineStart, endPoint);
+
+                    render();
+                }
+            }
+
+        });
+        canvas.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    lineStart = getMousePoint(e);
+                }
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (mode == MODE_LINE && e.getButton() == MouseEvent.BUTTON1 && lineStart != null) {
+                    drawLine(e);
                 }
             }
         });
@@ -254,15 +307,6 @@ public class Controller {
                 deleteAll();
             }
         });
-        window.getRootPane()
-                .getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
-                .put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0), "shift");
-        window.getRootPane().getActionMap().put("shift", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-            }
-        });
-
         /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Line Rasterizer Change -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
         window.getRasterizerBox().addActionListener(e -> {
@@ -298,7 +342,9 @@ public class Controller {
             }
             polygonRasterizer.rasterize(polygon);
         }
-
+        for (Line line : standaloneLines) {
+            rasterizer.rasterize(line);
+        }
         polygonRasterizer.rasterize(new Polygon(lines));   //právě kreslený polygon
 
         if (previewLine != null) {
@@ -321,6 +367,35 @@ public class Controller {
             lastPoint = point;
         }
         render();
+    }
+    private void drawLine(MouseEvent e) {
+        Point endPoint = getMousePoint(e);
+
+        if (e.isShiftDown()) {
+            endPoint = angleLock(lineStart, endPoint);
+        }
+
+        standaloneLines.add(new Line(LINE_COLOR, lineStart, endPoint));
+        lineStart = null;
+        previewLine = null;
+
+        render();
+    }
+    private Point angleLock(Point start, Point end) {
+
+        int dx = end.getX() - start.getX();
+        int dy = end.getY() - start.getY();
+
+        double length = Math.hypot(dx, dy);
+        double angle = Math.atan2(dy, dx);
+
+        double angleStep = Math.PI / 4; // 45° v radiánech
+        double lockedAngle = Math.round(angle / angleStep) * angleStep; // zaokrouhlení na nejbližších 45°
+
+        int x = start.getX() + (int) Math.round(Math.cos(lockedAngle) * length);
+        int y = start.getY() + (int) Math.round(Math.sin(lockedAngle) * length);
+
+        return new Point(x, y);
     }
 
     private Point getMousePoint(MouseEvent e) {  //Pomocna metoda pro souřadnici myši
