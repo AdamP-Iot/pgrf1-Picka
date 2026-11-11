@@ -68,6 +68,7 @@ public class Controller {
     private final SeedFiller seedFiller;
     private int fillColor = Color.RED.getRGB();
     private final PolygonFiller polygonFiller;
+    private final TextureFiller textureFiller;
 
     private SutherlandHodgmanClipper polygonClipper;
     private final List<Point> clipPoints = new ArrayList<>();
@@ -87,6 +88,7 @@ public class Controller {
         this.polygonFiller = new ScanLineFiller(canvas.getRaster());
         this.polygonClipper = new SutherlandHodgmanClipper();
         this.standaloneLines = new ArrayList<>();
+        this.textureFiller = new TextureFiller(canvas.getRaster());
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -115,20 +117,35 @@ public class Controller {
                     }
                 } else if (mode == MODE_FILL) { //JColorChooser pro výběr barvy na fill
                     if (e.getButton() == MouseEvent.BUTTON1) {
-                        Color selectedColor = JColorChooser.showDialog(window, "", new Color(fillColor, true));
-                        if (selectedColor != null) {
-                            fillColor = selectedColor.getRGB();
-                        }
+
                         Point point = getMousePoint(e);
                         Integer targetColor = canvas.getRaster().getPixel(point.getX(), point.getY());
 
                         if (targetColor != null) {
                             if ("SeedFiller".equals(selectedFiller)) {
+                                Color selectedColor = JColorChooser.showDialog(window, "", new Color(fillColor, true));
+
+                                if (selectedColor != null) {
+                                    fillColor = selectedColor.getRGB();
+                                }
+
                                 seedFiller.fill(point.getX(), point.getY(), targetColor, fillColor);
                             } else if ("ScanLineFiller".equals(selectedFiller)) {
                                 selectNearestPoint(point);
+                                Color selectedColor = JColorChooser.showDialog(window, "", new Color(fillColor, true));
+
+                                if (selectedColor != null) {
+                                    fillColor = selectedColor.getRGB();
+                                }
                                 if (selectedPolygon != null) {
                                     selectedPolygon.setFillColor(fillColor);
+                                    render();
+                                }
+                            } else if ("TextureFiller".equals(selectedFiller)) {
+                                selectNearestPoint(point);
+
+                                if(selectedPolygon != null){
+                                    selectedPolygon.setFillColor(textureFiller.getPattern());
                                     render();
                                 }
                             }
@@ -328,6 +345,8 @@ public class Controller {
                 setFiller("SeedFiller");
             } else if ("ScanLineFiller".equals(selected)) {
                 setFiller("ScanLineFiller");
+            } else if ("TextureFiller".equals(selected)) {
+                setFiller("TextureFiller");
             }
         });
     }
@@ -339,6 +358,8 @@ public class Controller {
            //uchování barev
             if(polygon.getFillColor() != null) {
                 polygonFiller.fill(polygon,polygon.getFillColor());
+            } else if (polygon.getFillPattern() != null) {
+                textureFiller.fill(polygon,polygon.getFillPattern());
             }
             polygonRasterizer.rasterize(polygon);
         }

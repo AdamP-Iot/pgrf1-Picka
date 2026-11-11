@@ -54,7 +54,7 @@ public class Window extends JFrame {
                 BorderFactory.createEmptyBorder(8, 10, 10, 10)
         ));
         String[] rasterizers = {"Trivial", "DDA", "Bresenham", "Midpoint"};
-        String[] fillers ={"SeedFiller", "ScanLineFiller"};
+        String[] fillers ={"ScanLineFiller", "SeedFiller", "TextureFiller"};
         /* -=-=-=-=-=-=-=-=-=- RasterizerBox gui -=-=-=-=-=-=-=-=-=- */
 
 
