@@ -29,10 +29,12 @@ public class Polygon {
         this.fillColor = fillColor;
         this.fillPatern = null;
     }
+
     public void setFillColor(int[][] fillPatern) {
         this.fillPatern = fillPatern;
         this.fillColor = null;
     }
+
     public int[][] getFillPattern() {
         return fillPatern;
     }

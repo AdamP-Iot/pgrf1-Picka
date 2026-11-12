@@ -12,22 +12,23 @@ public class RecursiveSeedFiller implements SeedFiller {
 
     @Override
     public boolean fill(int x1, int y1, int targetColor, int fillColor) {
-        if(targetColor == fillColor || raster.getPixel(x1,y1) == null || raster.getPixel(x1,y1) != targetColor) {
+        if (targetColor == fillColor || raster.getPixel(x1, y1) == null || raster.getPixel(x1, y1) != targetColor) {
             return false;
         }
-        fillRegion(x1,y1,targetColor,fillColor);
+        fillRegion(x1, y1, targetColor, fillColor);
         return true;
     }
+
     public void fillRegion(int x, int y, int targetColor, int fillColor) {
-        Integer color = raster.getPixel(x,y);
-        if(color == null || color != targetColor) {
+        Integer color = raster.getPixel(x, y);
+        if (color == null || color != targetColor) {
             return;
         }
-        raster.setPixel(x,y,fillColor);
-        fillRegion(x-1,y,targetColor,fillColor);
-        fillRegion(x+1,y,targetColor,fillColor);
-        fillRegion(x,y-1,targetColor,fillColor);
-        fillRegion(x,y+1,targetColor,fillColor);
+        raster.setPixel(x, y, fillColor);
+        fillRegion(x - 1, y, targetColor, fillColor);
+        fillRegion(x + 1, y, targetColor, fillColor);
+        fillRegion(x, y - 1, targetColor, fillColor);
+        fillRegion(x, y + 1, targetColor, fillColor);
 
         //8prostor
         //fillRegion(x-1,y-1,targetColor,fillColor);

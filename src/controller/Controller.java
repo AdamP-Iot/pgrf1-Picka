@@ -28,29 +28,40 @@ import view.Window;
  * controller = akce, vstupy uživatele
  * graphics = Raster
  *
- * @author PGRF FIM UHK
+ * @author Adam Picka
  * @version 2026
  */
 public class Controller {
+    /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Declaration -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
+
     private final Canvas canvas;
     private final Window window;
+
+    /* -=-=-=-=-=-=-=-=-=-=-=- Rasterizers -=-=-=-=-=-=-=-=-=-=-=- */
 
     private LineRasterizer rasterizer;
     private PolygonRasterizer polygonRasterizer;
 
+    /* -=-=-=-=-=-=-=-=-=-=-=- Lists and Lines -=-=-=-=-=-=-=-=-=-=-=- */
+
     private final List<Line> lines;
     private final List<Line> standaloneLines;
     private final List<Polygon> polygons;
-    private Point lineStart;
-
     private Line previewLine;
     private Line previewLine2;
 
-    private static final int LINE_COLOR = Color.WHITE.getRGB();
-    private static final int PREVIEW_COLOR = Color.RED.getRGB();
+    /* -=-=-=-=-=-=-=-=-=-=-=- Points -=-=-=-=-=-=-=-=-=-=-=- */
+
+    private Point lineStart;
     private Point firstPoint;
     private Point lastPoint;
 
+    /* -=-=-=-=-=-=-=-=-=-=-=- Color -=-=-=-=-=-=-=-=-=-=-=- */
+
+    private static final int LINE_COLOR = Color.WHITE.getRGB();
+    private static final int PREVIEW_COLOR = Color.RED.getRGB();
+
+    /* -=-=-=-=-=-=-=-=-=-=-=- Modes -=-=-=-=-=-=-=-=-=-=-=- */
 
     private int mode = MODE_POLYGON;
     private static final int MODE_POLYGON = 0;
@@ -61,9 +72,12 @@ public class Controller {
     private static final int MODE_LINE = 5;
     private static final int MODE_CLIP_LINE = 6;
 
+    /* -=-=-=-=-=-=-=-=-=-=-=- Select -=-=-=-=-=-=-=-=-=-=-=- */
 
     private Polygon selectedPolygon;
     private int selectedPointIndex;
+
+    /* -=-=-=-=-=-=-=-=-=-=-=- Fillers -=-=-=-=-=-=-=-=-=-=-=- */
 
     private String selectedFiller = "ScanLineFiller";
     private final SeedFiller seedFiller;
@@ -71,13 +85,13 @@ public class Controller {
     private final PolygonFiller polygonFiller;
     private final TextureFiller textureFiller;
 
+    /* -=-=-=-=-=-=-=-=-=-=-=- Clippers -=-=-=-=-=-=-=-=-=-=-=- */
+
     private SutherlandHodgmanClipper polygonClipper;
     private final List<Point> clipPoints = new ArrayList<>();
     private final CohenSutherlandClipper lineClipper;
     private Point clipFirstCorner;
     private Point clipPreviewCorner;
-
-
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- Constructors -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
@@ -96,13 +110,17 @@ public class Controller {
         this.lineClipper = new CohenSutherlandClipper();
     }
 
+
+
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
+
 
     public void init() {
         canvas.clear();
         polygonRasterizer.rasterize(new Polygon(lines));
 
-        //Vstup myší
+        /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Mouse Listener for Modes -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
+
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -122,7 +140,6 @@ public class Controller {
                     }
                 } else if (mode == MODE_FILL) { //JColorChooser pro výběr barvy na fill
                     if (e.getButton() == MouseEvent.BUTTON1) {
-
                         Point point = getMousePoint(e);
                         Integer targetColor = canvas.getRaster().getPixel(point.getX(), point.getY());
 
@@ -149,7 +166,7 @@ public class Controller {
                             } else if ("TextureFiller".equals(selectedFiller)) {
                                 selectNearestPoint(point);
 
-                                if(selectedPolygon != null){
+                                if (selectedPolygon != null) {
                                     selectedPolygon.setFillColor(textureFiller.getPattern());
                                     render();
                                 }
@@ -160,12 +177,12 @@ public class Controller {
                 } else if (mode == MODE_CLIP_POLYGON) {
                     if (e.getButton() == MouseEvent.BUTTON1) {
                         startLine(e);
-                    } else if (e.getButton() == MouseEvent.BUTTON3  && lines.size() >= 2) {
+                    } else if (e.getButton() == MouseEvent.BUTTON3 && lines.size() >= 2) {
                         finishPolygon();
                         Polygon boundary = polygons.removeLast();
                         List<Polygon> results = new ArrayList<>();
 
-                        for(Polygon subject : polygons){
+                        for (Polygon subject : polygons) {
                             Polygon clipped = polygonClipper.clip(subject, boundary);
                             List<Line> edges = clipped.getLines();
 
@@ -185,7 +202,7 @@ public class Controller {
                             }
                             results.add(clipped);
                         }
-                        if(!results.isEmpty()){
+                        if (!results.isEmpty()) {
                             polygons.clear();
                             polygons.addAll(results);
                         }
@@ -227,6 +244,7 @@ public class Controller {
                 mode = MODE_POLYGON;
             }
         };
+
         Action cursorAction = new AbstractAction("Cursor") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -235,6 +253,7 @@ public class Controller {
                 previewLine2 = null;
             }
         };
+
         Action deleteAction = new AbstractAction("Delete Polygon") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -243,6 +262,7 @@ public class Controller {
                 previewLine2 = null;
             }
         };
+
         Action fillAction = new AbstractAction("Fill Polygon") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -251,6 +271,7 @@ public class Controller {
                 previewLine2 = null;
             }
         };
+
         Action clipAction = new AbstractAction("Cut Polygon by Polygon") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -260,6 +281,7 @@ public class Controller {
                 previewLine2 = null;
             }
         };
+
         Action lineAction = new AbstractAction("Line") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -272,6 +294,7 @@ public class Controller {
                 render();
             }
         };
+
         Action clipLine = new AbstractAction("Cut Line") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -283,6 +306,7 @@ public class Controller {
                 render();
             }
         };
+
         //Odeslání tlačítka do JToolBaru
         window.addAction(polygonAction);
         window.addAction(deleteAction);
@@ -291,6 +315,7 @@ public class Controller {
         window.addAction(lineAction);
         window.addAction(clipLine);
         window.addAction(cursorAction);
+
         /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Mouse Listeners -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= */
 
         canvas.addMouseMotionListener(new MouseMotionAdapter() {
@@ -338,6 +363,7 @@ public class Controller {
             }
 
         });
+
         canvas.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -346,6 +372,7 @@ public class Controller {
 
                 }
             }
+
             @Override
             public void mouseReleased(MouseEvent e) {
                 if (mode == MODE_LINE && e.getButton() == MouseEvent.BUTTON1 && lineStart != null) {
@@ -396,11 +423,11 @@ public class Controller {
     public void render() {   //překreslení canvasu
         canvas.clear();
         for (Polygon polygon : polygons) { //už nakreslené polygony
-           //uchování barev
-            if(polygon.getFillColor() != null) {
-                polygonFiller.fill(polygon,polygon.getFillColor());
+            //uchování barev
+            if (polygon.getFillColor() != null) {
+                polygonFiller.fill(polygon, polygon.getFillColor());
             } else if (polygon.getFillPattern() != null) {
-                textureFiller.fill(polygon,polygon.getFillPattern());
+                textureFiller.fill(polygon, polygon.getFillPattern());
             }
             polygonRasterizer.rasterize(polygon);
         }
@@ -434,6 +461,7 @@ public class Controller {
         }
         render();
     }
+
     private void drawLine(MouseEvent e) {
         Point endPoint = getMousePoint(e);
 
@@ -447,6 +475,7 @@ public class Controller {
 
         render();
     }
+
     private Point angleLock(Point start, Point end) {
 
         int dx = end.getX() - start.getX();
@@ -482,6 +511,7 @@ public class Controller {
 
         render();
     }
+
     private void clipLines(Point corner1, Point corner2) {
         List<Line> results = new ArrayList<>();
 
@@ -496,6 +526,7 @@ public class Controller {
         standaloneLines.clear();
         standaloneLines.addAll(results);
     }
+
     private void drawClipPreview(Point first, Point second) {
 
         int xMin = Math.min(first.getX(), second.getX());
@@ -593,6 +624,7 @@ public class Controller {
         this.rasterizer = rasterizer;
         this.polygonRasterizer = new PolygonOutLineRasterizer(rasterizer);
     }
+
     private void setFiller(String selectedFiller) {
         this.selectedFiller = selectedFiller;
     }

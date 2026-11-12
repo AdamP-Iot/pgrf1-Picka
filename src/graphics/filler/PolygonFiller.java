@@ -4,5 +4,5 @@ import model.Polygon;
 
 
 public interface PolygonFiller {
-    void fill (Polygon polygon, int color);
+    void fill(Polygon polygon, int color);
 }

@@ -42,6 +42,7 @@ public class Canvas extends JPanel {
         super.paintComponent(graphics);
         raster.present(graphics);
     }
+
     public Color getBackgroundColor() {
         return BACKGROUND_COLOR;
     }

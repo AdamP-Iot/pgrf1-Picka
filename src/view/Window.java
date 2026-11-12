@@ -50,11 +50,12 @@ public class Window extends JFrame {
         tb.setVisible(true);
         tb.setBackground(new Color(0x252526));
         tb.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0,0,1,0,new Color(0x444444)),
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0x444444)),
                 BorderFactory.createEmptyBorder(8, 10, 10, 10)
         ));
         String[] rasterizers = {"Trivial", "DDA", "Bresenham", "Midpoint"};
-        String[] fillers ={"ScanLineFiller", "SeedFiller", "TextureFiller"};
+        String[] fillers = {"ScanLineFiller", "SeedFiller", "TextureFiller"};
+
         /* -=-=-=-=-=-=-=-=-=- RasterizerBox gui -=-=-=-=-=-=-=-=-=- */
 
 
@@ -87,8 +88,9 @@ public class Window extends JFrame {
         ));
         tb.add(Box.createHorizontalStrut(8));
     }
+
     private void styleComboBox(JComboBox<String> box) {
-        Dimension componentSize = new Dimension(180,35);
+        Dimension componentSize = new Dimension(180, 35);
         box.setMaximumSize(new Dimension(120, 25));
         box.setBackground(new Color(0x343434));
         box.setForeground(Color.WHITE);
@@ -96,11 +98,13 @@ public class Window extends JFrame {
         box.setMaximumSize(componentSize);
         box.setMinimumSize(componentSize);
         box.setFont(new Font(Font.SERIF, Font.BOLD, 16));
-        box.setBorder(BorderFactory.createLineBorder(new Color(0x4A4A4A),1));
+        box.setBorder(BorderFactory.createLineBorder(new Color(0x4A4A4A), 1));
     }
+
     public JComboBox<String> getRasterizerBox() {
         return rasterizerBox;
     }
+
     public JComboBox<String> getFillerBox() {
         return fillerBox;
     }
