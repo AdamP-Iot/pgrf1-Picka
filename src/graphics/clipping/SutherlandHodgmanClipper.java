@@ -42,7 +42,7 @@ public final class SutherlandHodgmanClipper implements PolygonClipper {
 
     public boolean isInside(Point p, Point a, Point b, boolean ccw) {
         double side = cross(a, b, p);
-        return ccw ? side >= 0 : side <= 0;
+        return ccw ? side >= 0 : side <= 0; //Ukázka ze cvika -> prvni strana pro TRUE, druhá pro FAlSE
     }
 
     public Point intersection(Point p, Point q, Point a, Point b) {

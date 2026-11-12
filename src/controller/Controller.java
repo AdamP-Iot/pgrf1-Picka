@@ -1,5 +1,6 @@
 package controller;
 
+import graphics.clipping.CohenSutherlandClipper;
 import graphics.clipping.SutherlandHodgmanClipper;
 import graphics.filler.*;
 import graphics.rasterizer.*;
@@ -72,6 +73,9 @@ public class Controller {
 
     private SutherlandHodgmanClipper polygonClipper;
     private final List<Point> clipPoints = new ArrayList<>();
+    private final CohenSutherlandClipper lineClipper;
+    private Point clipFirstCorner;
+    private Point clipPreviewCorner;
 
 
 
@@ -89,6 +93,7 @@ public class Controller {
         this.polygonClipper = new SutherlandHodgmanClipper();
         this.standaloneLines = new ArrayList<>();
         this.textureFiller = new TextureFiller(canvas.getRaster());
+        this.lineClipper = new CohenSutherlandClipper();
     }
 
     /* -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= Main functions -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- */
@@ -191,6 +196,24 @@ public class Controller {
                 } else if (mode == MODE_LINE) {
                     if (e.getButton() == MouseEvent.BUTTON1) {
                         lineStart = getMousePoint(e);
+
+                    }
+                } else if (mode == MODE_CLIP_LINE) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        Point point = getMousePoint(e);
+
+                        if (clipFirstCorner == null) {
+                            clipFirstCorner = point;
+                            clipPreviewCorner = point;
+                        } else {
+                            if (clipFirstCorner.getX() != point.getX() && clipFirstCorner.getY() != point.getY()) {
+                                clipLines(clipFirstCorner, point);
+                                clipFirstCorner = null;
+                                clipPreviewCorner = null;
+                            }
+                        }
+
+                        render();
                     }
                 }
             }
@@ -241,14 +264,23 @@ public class Controller {
             @Override
             public void actionPerformed(ActionEvent e) {
                 mode = MODE_LINE;
+                lineStart = null;
+                clipFirstCorner = null;
+                clipPreviewCorner = null;
                 previewLine = null;
                 previewLine2 = null;
+                render();
             }
         };
         Action clipLine = new AbstractAction("Cut Line") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO: Implementovat Cohen-Sutherland
+                mode = MODE_CLIP_LINE;
+                clipFirstCorner = null;
+                clipPreviewCorner = null;
+                previewLine = null;
+                previewLine2 = null;
+                render();
             }
         };
         //Odeslání tlačítka do JToolBaru
@@ -263,6 +295,14 @@ public class Controller {
 
         canvas.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
+                if (mode == MODE_CLIP_LINE) {
+                    if (clipFirstCorner != null) {
+                        clipPreviewCorner = getMousePoint(e);
+                        render();
+                    }
+                    return;
+                }
+
                 if (mode != MODE_POLYGON && mode != MODE_CLIP_POLYGON) {
                     return;
                 }
@@ -303,6 +343,7 @@ public class Controller {
             public void mousePressed(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     lineStart = getMousePoint(e);
+
                 }
             }
             @Override
@@ -375,6 +416,10 @@ public class Controller {
             rasterizer.rasterize(previewLine2);
         }
 
+        if (mode == MODE_CLIP_LINE && clipFirstCorner != null && clipPreviewCorner != null) {
+            drawClipPreview(clipFirstCorner, clipPreviewCorner);
+        }
+
         canvas.repaint();
     }
 
@@ -407,7 +452,7 @@ public class Controller {
         int dx = end.getX() - start.getX();
         int dy = end.getY() - start.getY();
 
-        double length = Math.hypot(dx, dy);
+        double length = Math.hypot(dx, dy); //hypotenuse -> přepona
         double angle = Math.atan2(dy, dx);
 
         double angleStep = Math.PI / 4; // 45° v radiánech
@@ -437,6 +482,37 @@ public class Controller {
 
         render();
     }
+    private void clipLines(Point corner1, Point corner2) {
+        List<Line> results = new ArrayList<>();
+
+        for (Line line : standaloneLines) {
+
+            Line clipped = lineClipper.clip(line, corner1, corner2);
+
+            if (clipped != null) {
+                results.add(clipped);
+            }
+        }
+        standaloneLines.clear();
+        standaloneLines.addAll(results);
+    }
+    private void drawClipPreview(Point first, Point second) {
+
+        int xMin = Math.min(first.getX(), second.getX());
+        int xMax = Math.max(first.getX(), second.getX());
+        int yMin = Math.min(first.getY(), second.getY());
+        int yMax = Math.max(first.getY(), second.getY());
+
+        Point p1 = new Point(xMin, yMin);
+        Point p2 = new Point(xMax, yMin);
+        Point p3 = new Point(xMax, yMax);
+        Point p4 = new Point(xMin, yMax);
+
+        rasterizer.rasterize(new Line(PREVIEW_COLOR, p1, p2));
+        rasterizer.rasterize(new Line(PREVIEW_COLOR, p2, p3));
+        rasterizer.rasterize(new Line(PREVIEW_COLOR, p3, p4));
+        rasterizer.rasterize(new Line(PREVIEW_COLOR, p4, p1));
+    }
 
     private void deleteAll() {   //vymazání všech prvků na canvasu
         polygons.clear();
@@ -445,6 +521,10 @@ public class Controller {
         previewLine2 = null;
         lastPoint = null;
         firstPoint = null;
+        standaloneLines.clear();
+        lineStart = null;
+        clipFirstCorner = null;
+        clipPreviewCorner = null;
         canvas.clear();
         canvas.repaint();
     }
